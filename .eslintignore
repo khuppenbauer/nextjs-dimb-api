@@ -1,0 +1,6 @@
+*.js
+node_modules/**
+public/**
+.netlify
+.next
+out
