@@ -24,6 +24,7 @@ export default async function handler(
           JOIN dimb_opendatasoft_plz_germany AS geodata
           ON geodata.plz_code = dimb.plz
           WHERE dimb_ig = ${slug}
+          GROUP BY plz, geometry
         `;
         if (data && data.length > 0) {
           const features: GeoJsonFeatureType[] = data.map((item) => {
