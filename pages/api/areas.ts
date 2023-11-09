@@ -4,7 +4,8 @@ import geobuf from 'geobuf';
 import Pbf from 'pbf';
 import axios from 'axios';
 import sql from '../../lib/db';
-import featureCollection from '../../lib/geojson';
+import featureCollection from '../../lib/featureCollection';
+import parseFeature from '../../lib/feature';
 import GeoJsonFeatureType from '../../interfaces/geoJsonFeature';
 
 interface Result {
@@ -44,39 +45,13 @@ async function getAreas() {
 async function parseData(data: Result[]) {
   const areas = await getAreas();
   return data.map((item) => {
-    const { name, postcodes, geometry } = item;
-    const geoJson = JSON.parse(geometry);
-    const { type, coordinates } = geoJson;
-    let items = [];
-
-    if (type === 'Polygon') {
-      if (coordinates.length > 1) {
-        const filteredCoordinates: number[][] = coordinates.reduce((prev: [], current: []) => {
-          return prev.length > current.length ? prev : current;
-        }, []);
-        items = [filteredCoordinates];
-      } else {
-        items = coordinates;
-      }
-    } else if (type === 'MultiPolygon') {
-      const filteredCoordinates: number[][][] = coordinates.map((polygonCoordinates: [][]) => {
-        const res = polygonCoordinates.reduce((prev: [], current: []) => {
-          return prev.length > current.length ? prev : current;
-        }, []);
-        return [res];
-      });
-      items = filteredCoordinates;
-    }
-
+    const { name, postcodes } = item;
     const properties = areas[name] || { name, postcodes: postcodes?.split(',') };
+    const feature = parseFeature(item);
     return {
-      type: 'Feature',
-      geometry: {
-        type,
-        coordinates: items,
-      },
-      properties,
-    } as GeoJsonFeatureType;
+      ...feature,
+      properties, 
+    };
   });
 }
 

@@ -2,23 +2,11 @@ import axios from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import getConfig from 'next/config';
 import sql from '../../lib/db';
+import cache from '../../lib/cache';
 
 const {
   publicRuntimeConfig: { baseUrl },
 } = getConfig();
-
-async function insertCache(name: string, meta: any, geometry: any, simplify: number) {  
-  const cache = await sql`
-    INSERT INTO dimb_ig
-      (name, meta, geometry, simplified)
-    VALUES
-      (${name}, ${meta}, ${geometry}, ${simplify})
-    ON CONFLICT (name, simplified)
-    DO UPDATE
-    SET geometry = ${geometry}
-  `
-  return cache
-}
 
 async function cacheAll(simplify: number) {
   const property = 'dimb_ig';
@@ -28,11 +16,10 @@ async function cacheAll(simplify: number) {
   return data.reduce(async (lastPromise, item) => {
     const accum: any = await lastPromise;
     const { dimb_ig } = item;
-    console.log(dimb_ig);
     const url = `${baseUrl}/api/areas?ig=${dimb_ig}&simplify=${simplify}`;
     const { data } = await axios.get(url);
     const { features } = data;
-    await insertCache(dimb_ig, features[0].properties, features[0], simplify);
+    await cache(dimb_ig, features[0].properties, features[0], simplify);
     return [...accum, {}];
   }, Promise.resolve([]));
 }

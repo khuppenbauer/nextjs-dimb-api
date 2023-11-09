@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import sql from '../../../../lib/db';
-import featureCollection from '../../../../lib/geojson';
+import featureCollection from '../../../../lib/featureCollection';
 import GeoJsonFeatureType from '../../../../interfaces/geoJsonFeature';
 
 interface Result {
